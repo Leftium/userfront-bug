@@ -123,55 +123,34 @@ async function main(): Promise<void> {
 		})
 	)
 
-	await Promise.all(
-		userData.map(async (seedUser) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const workspaces = userRoles[seedUser.email]
 
-			const userfrontUser = await uf.createUser({
-				name: seedUser.name,
-				email: seedUser.email,
-				username: seedUser.username,
-				data: {
-					crm_id: seedUser.crm_id,
-				},
-			})
+	userData.map(async (seedUser) => {
+		const workspaces = userRoles[seedUser.email]
 
-			if (workspaces) {
-				await Promise.all(
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-					Object.entries(workspaces).map(async ([workspaceSlug, role]) => {
-						const workspaceTenantId: string = slug2tenant[workspaceSlug]
-						const organizationTenantId: string = workspace2organization[workspaceSlug]
-						const roles = [role] as [string]
-
-						let success = false
-						while (!success) {
-							try {
-								// eslint-disable-next-line no-await-in-loop
-								await uf.setUserRoles(userfrontUser.userId as number, roles, workspaceTenantId)
-								success = true
-							} catch (error) {
-								console.log(error)
-							}
-						}
-
-						success = false
-						while (!success) {
-							try {
-								// eslint-disable-next-line no-await-in-loop
-								await uf.setUserRoles(userfrontUser.userId as number, ['member'], organizationTenantId)
-								success = true
-							} catch (error) {
-								console.log(error)
-							}
-						}
-					})
-				)
-			}
-			console.log(`Created user with id: ${userfrontUser.userId}`)
+		const userfrontUser = await uf.createUser({
+			name: seedUser.name,
+			email: seedUser.email,
+			username: seedUser.username,
+			data: {
+				crm_id: seedUser.crm_id,
+			},
 		})
-	)
+
+		if (workspaces) {
+			await Promise.all(
+				Object.entries(workspaces).map(async ([workspaceSlug, role]) => {
+					const workspaceTenantId: string = slug2tenant[workspaceSlug]
+					const organizationTenantId: string = workspace2organization[workspaceSlug]
+					const roles = [role] as [string]
+
+					await uf.setUserRoles(userfrontUser.userId as number, roles, workspaceTenantId)
+
+					return uf.setUserRoles(userfrontUser.userId as number, ['member'], organizationTenantId)
+				})
+			)
+		}
+		console.log(`Created user with id: ${userfrontUser.userId}`)
+	})
 	console.log(`Seeding finished.`)
 }
 
