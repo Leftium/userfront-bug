@@ -20,9 +20,6 @@ const userRoles = {
 		workspace1: 'admin',
 		workspace2: 'admin',
 		workspace3: 'admin',
-		workspace4: 'admin',
-		workspace5: 'admin',
-		workspace6: 'admin',
 	},
 }
 
@@ -138,13 +135,8 @@ async function main(): Promise<void> {
 
 		if (workspaces) {
 			await Promise.all(
-				Object.entries(workspaces).map(async ([workspaceSlug, role]) => {
-					const workspaceTenantId: string = slug2tenant[workspaceSlug]
+				Object.entries(workspaces).map(async ([workspaceSlug]) => {
 					const organizationTenantId: string = workspace2organization[workspaceSlug]
-					const roles = [role] as [string]
-
-					await uf.setUserRoles(userfrontUser.userId as number, roles, workspaceTenantId)
-
 					return uf.setUserRoles(userfrontUser.userId as number, ['member'], organizationTenantId)
 				})
 			)
